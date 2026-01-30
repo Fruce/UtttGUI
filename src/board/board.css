@@ -1,0 +1,128 @@
+.root {
+    -fx-background-color: #1b1b1b;
+}
+
+/* ===== BIG GRID LINES ===== */
+.big-line {
+    -fx-stroke: #e6e6e6;
+    -fx-stroke-width: 3;
+    -fx-stroke-line-cap: square;
+}
+
+/* ===== SMALL GRID LINES ===== */
+.small-line {
+    -fx-stroke: #cfcfcf;
+    -fx-stroke-width: 1.5;
+    -fx-stroke-line-cap: square;
+}
+
+/* ===== MARKS ===== */
+
+.mark-x {
+	-fx-font-size: 50px;
+    -fx-fill: gold;
+}
+
+.mark-o {
+	-fx-font-size: 50px;
+    -fx-fill: #ff5555;
+}
+
+/* ===== SMALL CELL HOVER HIGHLIGHT ===== */
+.cell-hover {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+}
+
+.bigcell-highlight {
+    -fx-border-width: 4;
+    -fx-border-color: transparent;
+}
+
+.gold-border-highlight {
+    -fx-border-color: gold;
+    -fx-border-width: 4;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.7), 60, 0.5, 0, 0);
+}
+
+.red-border-highlight {
+    -fx-border-color: red;
+    -fx-border-width: 4;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow(gaussian, red, 60, 0.5, 0, 0);
+}
+
+.gold-glow {
+    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.7), 20, 0.1, 0, 0);
+}
+
+.red-glow {
+    -fx-effect: dropshadow(gaussian, rgba(255,0,0,0.7), 20, 0.1, 0, 0);
+}
+
+/* ================= LOCAL WIN MARK ================= */
+
+.gold-local-win-mark {
+    -fx-font-family: "Segoe UI", "Arial";
+    -fx-font-size: 250px;
+
+    -fx-fill: gold;           /* warm gold */
+    
+    /* subtle glow */
+    -fx-effect: dropshadow(
+        gaussian,
+        rgba(255, 213, 74, 0.75),
+        25,
+        0.4,
+        0,
+        0
+    );
+}
+
+.red-local-win-mark {
+    -fx-font-family: "Segoe UI", "Arial";
+    -fx-font-size: 250px;
+
+    -fx-fill: #ff5555;           /* warm gold */
+    
+    /* subtle glow */
+    -fx-effect: dropshadow(
+        gaussian,
+        rgba(255, 0, 0, 0.75),
+        25,
+        0.4,
+        0,
+        0
+    );
+}
+
+/* ================= GAME OVER OVERLAY ================= */
+
+.game-over-dim {
+    -fx-fill: rgba(0, 0, 0, 0.4);
+}
+
+/* Title */
+.game-over-title {
+    -fx-fill: white;
+    -fx-font-size: 64px;
+    -fx-font-weight: 600;
+}
+
+/* X / O */
+.game-over-winner {
+    -fx-fill: white;
+    -fx-font-size: 42px;
+    -fx-font-weight: 600;
+}
+
+/* Wins! */
+.game-over-wins {
+    -fx-fill: white;
+    -fx-font-size: 42px;
+    -fx-font-weight: 400;
+}
+
+
+
+
