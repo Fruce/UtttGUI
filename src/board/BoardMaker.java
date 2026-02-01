@@ -2,6 +2,7 @@ package board;
 
 import game.GameController;
 import game.MoveResult;
+
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.layout.*;
@@ -31,10 +32,13 @@ public class BoardMaker {
     private static Text gameOverWins;
 
     // ================= BOARD NODES ===================
+    private static GridPane boardInputLayer;
     private static Pane[] enterHighlights = new Pane[9];
     private static Pane[] exitHighlights  = new Pane[9];
 
     public static final Pane[] bigCells = new Pane[9];
+    public static final StackPane[][] cells =  new StackPane[9][9];
+    
     private static final StackPane[] gameplayLayers = new StackPane[9];
     private static final Text[] localWinMarks = new Text[9];
 
@@ -201,76 +205,31 @@ public class BoardMaker {
             Text mark = new Text();
             mark.getStyleClass().add("mark");
             cell.getChildren().add(mark);
+            
+            cells[bigIndex][smallIndex] = cell;
 
             cell.setOnMouseClicked(e -> {
-                e.consume();
 
-                char playedMark = controller.getCurrentMark();
-                MoveResult result = controller.placeMove(bigIndex, smallIndex);
-                if (result == MoveResult.INVALID) return;
-
-                
-                
-                
-                //click sound fx
-                if (result != MoveResult.LOCAL_WIN && result != MoveResult.GLOBAL_WIN) {
-                		if (playedMark == 'X')
-                			SoundFX.playClick_X();
-                		else
-                			SoundFX.playClick_O();
-                		
-                }
-                
-                BoardEffects.placeMark(cell, playedMark);
-                
-                BoardEffects.clearFreeMoveHighlight();
-
-                if (result == MoveResult.LOCAL_WIN) {
-                		
-                		if (playedMark == 'X')
-                			SoundFX.playWinLocal_X();
-                		else
-                			SoundFX.playWinLocal_O();
-                		
-                    BoardEffects.showLocalWin(
-                            gameplayLayers[bigIndex],
-                            localWinMarks[bigIndex],
-                            playedMark
-                    );
-                }
-
-                if (result == MoveResult.GLOBAL_WIN) {
-                    BoardEffects.clearSmallHighlight();
-                    SoundFX.playWinGlobal();
-                    BoardEffects.showLocalWin(
-                            gameplayLayers[bigIndex],
-                            localWinMarks[bigIndex],
-                            playedMark
-                    );
-                    BoardEffects.showGameOver(playedMark);
-                    return;
-                }
-
-                int next = controller.getNextForcedBoard();
-                if (next == -1 || controller.isDeadBoard(next)) {
-                    BoardEffects.clearSmallHighlight();
-                    BoardEffects.freeMoveHighlight(playedMark);
-                } else {
-                    BoardEffects.highlightBigCell(next, playedMark);
-                }
+	            	MoveResult result = controller.placeMove(bigIndex, smallIndex); 
+                refreshBoard(controller, bigIndex, smallIndex, result); //update the board with visual changes
+                updateInputLock(controller); //lock board if not local player.
             });
             
             
             
             cell.setOnMouseEntered(e -> {
+            		if (controller.firstMoveLocked) return;
+            		
                 if (controller.checkValidity(bigIndex, smallIndex) == MoveResult.VALID) {
                 
-                    		SoundFX.playHover();                   
+                    SoundFX.playHover();                   
                     BoardAnimations.hoverEnter(cell);
                 }
             });
 
-            cell.setOnMouseExited(e -> BoardAnimations.hoverExit(cell));
+            cell.setOnMouseExited(e -> {
+	            	if (controller.firstMoveLocked) return;
+	            	BoardAnimations.hoverExit(cell);});
 
             grid.add(cell, i % 3, i / 3);
         }
@@ -278,6 +237,69 @@ public class BoardMaker {
         return grid;
     }
 
+    /* ================= REFRESH BOARD ================= */
+    
+    public static void refreshBoard(
+    		GameController controller, int bigIndex, int smallIndex, MoveResult result) 
+    {
+    	
+        char playedMark = controller.getCurrentMark();
+        if (result == MoveResult.INVALID) return;
+  
+        //click sound fx
+        if (result != MoveResult.LOCAL_WIN && result != MoveResult.GLOBAL_WIN) {
+        		if (playedMark == 'X')
+        			SoundFX.playClick_X();
+        		else
+        			SoundFX.playClick_O();
+        		
+        }
+        BoardEffects.placeMark(cells[bigIndex][smallIndex], playedMark);
+        
+        BoardEffects.clearFreeMoveHighlight();
+
+        if (result == MoveResult.LOCAL_WIN) {
+        		
+        		if (playedMark == 'X')
+        			SoundFX.playWinLocal_X();
+        		else
+        			SoundFX.playWinLocal_O();
+        		
+            BoardEffects.showLocalWin(
+                    gameplayLayers[bigIndex],
+                    localWinMarks[bigIndex],
+                    playedMark
+            );
+        }
+
+        if (result == MoveResult.GLOBAL_WIN) {
+            BoardEffects.clearSmallHighlight();
+            SoundFX.playWinGlobal();
+            BoardEffects.showLocalWin(
+                    gameplayLayers[bigIndex],
+                    localWinMarks[bigIndex],
+                    playedMark
+            );
+            BoardEffects.showGameOver(playedMark);
+            return;
+        }
+
+        int next = controller.getNextForcedBoard();
+        if (next == -1 || controller.isDeadBoard(next)) {
+            BoardEffects.clearSmallHighlight();
+            BoardEffects.freeMoveHighlight(playedMark);
+        } else {
+            BoardEffects.highlightBigCell(next, playedMark);
+        }
+    }
+    
+    /* ================= BOARD LOCK ================= */
+    
+    public static void updateInputLock(GameController controller) {
+        boolean localTurn = controller.isLocalPlayersTurn();
+        
+        boardInputLayer.setMouseTransparent(!localTurn);
+    }
     /* ================= HIGHLIGHT PANES ================= */
     
     private static Pane createHighlightPane() {
@@ -376,6 +398,8 @@ public class BoardMaker {
     private static GridPane createBoardGrid(GameController controller) {
 
         GridPane board = new GridPane();
+        boardInputLayer = board;
+        
         board.setPrefSize(BOARD_SIZE, BOARD_SIZE);
 
         for (int i = 0; i < 3; i++) {

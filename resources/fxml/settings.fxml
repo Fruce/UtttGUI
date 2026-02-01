@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Button?>
+
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="sceneControllers.SettingsController"
+           stylesheets="@menu.css"
+           style="-fx-background-color: #0f0f0f;">
+
+    <VBox alignment="CENTER" spacing="16">
+
+        <Label text="NGROK AUTH TOKEN"
+               style="-fx-text-fill: white; -fx-font-size: 22px;"/>
+
+        <TextField fx:id="tokenField"
+                   promptText="Enter ngrok auth token"
+                   maxWidth="300"/>
+
+        <Label fx:id="statusLabel"
+               text=""
+               style="-fx-text-fill: #aaaaaa;"/>
+
+        <Button text="SAVE" onAction="#save" styleClass="menu-button"/>
+        <Button text="BACK" onAction="#back" styleClass="menu-button-secondary"/>
+
+    </VBox>
+</StackPane>

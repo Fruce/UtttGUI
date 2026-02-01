@@ -31,11 +31,9 @@ public class BoardEffects {
         return BLUR;
     }
 
-	
     public static void placeMark(StackPane cell, char mark) {
     		
     		//showGameOver(mark);
-    		freeMoveHighlight(mark);
     	
     		cell.getStyleClass().remove("cell-hover");
         Text markNode = (Text) cell.getChildren().get(0);

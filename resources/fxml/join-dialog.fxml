@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="sceneControllers.JoinController"
+           stylesheets="@menu.css"
+           style="-fx-background-color: #0f0f0f;">
+
+    <VBox alignment="CENTER" spacing="16">
+
+        <Label text="ENTER JOIN CODE"
+               style="-fx-text-fill: white; -fx-font-size: 22px;"/>
+
+        <TextField fx:id="codeField"
+                   promptText="6-letter code"
+                   maxWidth="200"/>
+
+        <Button text="JOIN" onAction="#connect" styleClass="menu-button"/>
+        <Button text="BACK" onAction="#back" styleClass="menu-button-secondary"/>
+
+    </VBox>
+</StackPane>
