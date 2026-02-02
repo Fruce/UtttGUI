@@ -123,6 +123,138 @@
     -fx-font-weight: 400;
 }
 
+/* =========================
+   SIDE PANE ROOT
+   ========================= */
 
+.side-pane {
+    -fx-background-color: linear-gradient(
+        to bottom,
+        #1b1b1b,
+        #111111
+    );
+    -fx-padding: 10 0 10 0;
+    -fx-spacing: 14;
+}
+
+
+/* =========================
+   PLAYER NAMES
+   ========================= */
+
+
+.player-name {
+    -fx-text-fill: #9fa4aa;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-opacity: 0.6;
+}
+
+.player-name.active {
+    -fx-text-fill: #ffffff;
+    -fx-opacity: 1.0;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(80,160,255,0.8), 12, 0.5, 0, 0);
+}
+
+
+/* =========================
+   TURN STATUS
+   ========================= */
+
+.turn-status {
+    -fx-text-fill: #6f7378;
+    -fx-font-size: 15px;
+    -fx-font-style: italic;
+    -fx-opacity: 0.85;
+}
+
+
+/* =========================
+   BUTTONS (BASE)
+   ========================= */
+
+.side-pane .button {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: #e6e6e6;
+    -fx-font-size: 16px;
+    /*-fx-font-weight: bold;*/
+
+    -fx-padding: 10 18 10 18;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+    -fx-border-color: #3a3a3a;
+    -fx-border-width: 0;
+}
+
+
+/* =========================
+   BUTTON HOVER
+   ========================= */
+
+.side-pane .button:hover {
+    -fx-background-color: #3a3a3a;
+    -fx-border-color: #5c5c5c;
+    -fx-cursor: hand;
+}
+
+
+/* =========================
+   BUTTON PRESSED
+   ========================= */
+
+.side-pane .button:pressed {
+    -fx-background-color: #202020;
+    -fx-border-color: #7a7a7a;
+}
+
+
+/* =========================
+   EMPHASIS BUTTONS
+   ========================= */
+
+.new-game-btn {
+    -fx-background-color: linear-gradient(
+        to bottom,
+        #2d5eff,
+        #1e3fbf
+    );
+    -fx-border-color: #4a6fff;
+}
+
+.new-game-btn:hover {
+    -fx-background-color: linear-gradient(
+        to bottom,
+        #3b6dff,
+        #2a4ed6
+    );
+}
+
+.takeback-btn {
+    -fx-background-color: #2f2f2f;
+    -fx-border-color: #555555;
+}
+
+/* =========================
+   TURN TEXT
+   ========================= */
+
+.turn-text {
+    -fx-fill: #cfcfcf;
+    -fx-font-size: 16px;
+    -fx-font-weight: normal;
+}
+
+.turn-x {
+    -fx-fill: gold;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.turn-o {
+    -fx-fill: #ff4d4d;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
 
 

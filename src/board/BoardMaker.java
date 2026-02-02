@@ -11,6 +11,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextBoundsType;
 import javafx.scene.transform.Scale;
+import move.MoveSwitcher;
 
 public class BoardMaker {
 
@@ -203,7 +204,6 @@ public class BoardMaker {
             cell.setAlignment(Pos.CENTER);
 
             Text mark = new Text();
-            mark.getStyleClass().add("mark");
             cell.getChildren().add(mark);
             
             cells[bigIndex][smallIndex] = cell;
@@ -211,7 +211,12 @@ public class BoardMaker {
             cell.setOnMouseClicked(e -> {
 
 	            	MoveResult result = controller.placeMove(bigIndex, smallIndex); 
-                refreshBoard(controller, bigIndex, smallIndex, result); //update the board with visual changes
+                refreshBoard(controller, bigIndex, smallIndex, result);
+                
+                SidePane.setActivePlayer(controller.isLocalPlayersTurn());
+                char oppMark = MoveSwitcher.switchMove(controller.getCurrentMark());
+                SidePane.updateTurnText(false, oppMark);
+                
                 updateInputLock(controller); //lock board if not local player.
             });
             

@@ -10,15 +10,37 @@
            fx:controller="sceneControllers.MultiplayerMenuController"
            stylesheets="@menu.css"
            style="-fx-background-color: #0f0f0f;">
+           
+	<StackPane fx:id="multiWrapper" alignment="CENTER">
 
-    <VBox alignment="CENTER" spacing="20">
+        <!-- Fixed-size root that gets scaled -->
+		<StackPane fx:id="multiRoot" alignment="CENTER">
 
-        <Label text="MULTIPLAYER"
-               style="-fx-text-fill: white; -fx-font-size: 28px;"/>
-
-        <Button text="HOST GAME" onAction="#host" styleClass="menu-button"/>
-        <Button text="JOIN GAME" onAction="#join" styleClass="menu-button"/>
-        <Button text="BACK" onAction="#back" styleClass="menu-button-secondary"/>
-
-    </VBox>
+		    <VBox alignment="CENTER" spacing="20">
+		
+		        <Label text="MULTIPLAYER"
+		               style="-fx-text-fill: white; -fx-font-size: 28px;"/>
+		
+		        <Button text="HOST GAME"
+		        			onAction="#host"
+		        			prefWidth="200"
+						prefHeight="52"
+		        			styleClass="menu-button"/>
+		        			
+		        <Button text="JOIN GAME"
+		        			onAction="#join"
+		        			prefWidth="200"
+						prefHeight="52"
+		        			styleClass="menu-button"/>
+		        			
+		        <Button text="BACK"
+		        			onAction="#back"
+		        			prefWidth="200"
+						prefHeight="52"
+		        			styleClass="menu-button-secondary"/>
+		
+		    </VBox>
+		</StackPane>
+	</StackPane>
+		    
 </StackPane>

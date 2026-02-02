@@ -1,9 +1,12 @@
 package network;
 
 import board.BoardMaker;
+import board.SidePane;
 import game.GameController;
 import game.MoveResult;
 import javafx.application.Platform;
+import move.MoveSwitcher;
+import network.packetes.MovePacket;
 
 public class NetworkListener extends Thread {
 
@@ -32,8 +35,17 @@ public class NetworkListener extends Thread {
                 	controller.firstMoveLocked = false;
                 	MoveResult result = controller.placeMove(move.big, move.small);
                 	
+                	boolean isLocal = controller.isLocalPlayersTurn();
+                	
+                	char oppMark = MoveSwitcher.switchMove(controller.getCurrentMark());
+                	
                 	BoardMaker.refreshBoard(controller, move.big, move.small, result);
                 	BoardMaker.updateInputLock(controller);
+                	SidePane.setActivePlayer(isLocal);
+                	
+                    if (isLocal) {
+                        SidePane.updateTurnText(true, oppMark); }
+  
                 	                	
                 });
 

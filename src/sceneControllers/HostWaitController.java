@@ -7,12 +7,32 @@ import javafx.scene.control.Label;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import main.ResizableScene;
 import main.SceneManager;
 import network.HostServer;
 import network.NgrokManager;
 
-public class HostWaitController {
+public class HostWaitController implements ResizableScene {
+	
+	@FXML
+	private StackPane hostWrapper; 
+	
+	@FXML
+	private StackPane hostRoot;
+	
+	public StackPane getWrapper() {
+	    return hostWrapper;
+	}
+	
+	public StackPane getRoot() {
+	    return hostRoot;
+	}
+	
+	public double getBaseSize() {
+	    return 600;
+	}
 
     @FXML
     private Label codeLabel;
@@ -28,12 +48,11 @@ public class HostWaitController {
 
     private String joinCode;
     private HostServer hostServer;
-    
+       
     public void showStarting() {
         codeLabel.setText("Starting server...");
     }
-
-
+    
     public void setJoinCode(String code) {
         this.joinCode = code;
         codeLabel.setText(code);

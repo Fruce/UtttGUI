@@ -2,6 +2,8 @@
 
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Button?>
@@ -12,21 +14,79 @@
            stylesheets="@menu.css"
            style="-fx-background-color: #0f0f0f;">
 
-    <VBox alignment="CENTER" spacing="16">
+    <StackPane fx:id="settingsWrapper" alignment="CENTER">
 
-        <Label text="NGROK AUTH TOKEN"
-               style="-fx-text-fill: white; -fx-font-size: 22px;"/>
+        <StackPane fx:id="settingsRoot" alignment="CENTER">
 
-        <TextField fx:id="tokenField"
-                   promptText="Enter ngrok auth token"
-                   maxWidth="300"/>
+            <VBox alignment="CENTER" spacing="26">
 
-        <Label fx:id="statusLabel"
-               text=""
-               style="-fx-text-fill: #aaaaaa;"/>
+                <!-- ================= NGROK ================= -->
 
-        <Button text="SAVE" onAction="#save" styleClass="menu-button"/>
-        <Button text="BACK" onAction="#back" styleClass="menu-button-secondary"/>
+                <Label text="NGROK AUTH TOKEN"
+                       style="-fx-text-fill: white; -fx-font-size: 22px;"/>
 
-    </VBox>
+                <GridPane alignment="CENTER" hgap="12">
+                    <columnConstraints>
+                        <!-- Left spacer -->
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                        <!-- TextField -->
+                        <ColumnConstraints/>
+                        <!-- Save button -->
+                        <ColumnConstraints/>
+                    </columnConstraints>
+
+                    <TextField fx:id="tokenField"
+                               GridPane.columnIndex="1"
+                               prefWidth="420"
+                               promptText="Enter ngrok auth token"/>
+
+                    <Button text="SAVE"
+                            GridPane.columnIndex="2"
+                            onAction="#saveToken"
+                            prefWidth="90"
+                            styleClass="menu-button"/>
+                </GridPane>
+
+                <!-- ================= USERNAME ================= -->
+
+                <Label text="USERNAME"
+                       style="-fx-text-fill: white; -fx-font-size: 18px;"/>
+
+                <GridPane alignment="CENTER" hgap="12">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                        <ColumnConstraints/>
+                        <ColumnConstraints/>
+                    </columnConstraints>
+
+                    <TextField fx:id="usernameField"
+                               GridPane.columnIndex="1"
+                               prefWidth="420"
+                               promptText="Enter your username"/>
+
+                    <Button text="SAVE"
+                            GridPane.columnIndex="2"
+                            onAction="#saveUsername"
+                            prefWidth="90"
+                            styleClass="menu-button"/>
+                </GridPane>
+
+                <!-- STATUS -->
+                <Label fx:id="statusLabel"
+                       text=""
+                       style="-fx-text-fill: #aaaaaa;"/>
+
+                <!-- BACK -->
+                <Button text="BACK"
+                        onAction="#back"
+                        prefWidth="110"
+                        prefHeight="20"
+                        styleClass="menu-button-secondary"/>
+
+            </VBox>
+
+        </StackPane>
+
+    </StackPane>
+
 </StackPane>

@@ -2,14 +2,11 @@
 
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.paint.RadialGradient?>
 <?import javafx.scene.paint.Stop?>
-
 
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
@@ -17,71 +14,88 @@
            stylesheets="@menu.css"
            style="-fx-background-color: #0f0f0f;">
 
-    <!-- Subtle background glow -->
-	<Rectangle width="1200" height="800">
-	    <fill>
-	        <RadialGradient radius="1.2"
-	                        centerX="0.5"
-	                        centerY="0.3">
-	            <stops>
-	                <Stop offset="0.0" color="#1a1a1a"/>
-	                <Stop offset="1.0" color="#0f0f0f"/>
-	            </stops>
-	        </RadialGradient>
-	    </fill>
-	</Rectangle>
+    <!-- ========= BACKGROUND (fills window, NOT scaled) ========= -->
+    <Region>
+        <background>
+            <javafx.scene.layout.Background>
+                <fills>
+                    <javafx.scene.layout.BackgroundFill>
+                        <fill>
+                            <RadialGradient radius="1.2"
+                                            centerX="0.5"
+                                            centerY="0.3">
+                                <stops>
+                                    <Stop offset="0.0" color="#1a1a1a"/>
+                                    <Stop offset="1.0" color="#0f0f0f"/>
+                                </stops>
+                            </RadialGradient>
+                        </fill>
+                    </javafx.scene.layout.BackgroundFill>
+                </fills>
+            </javafx.scene.layout.Background>
+        </background>
+    </Region>
 
-    <VBox alignment="CENTER" spacing="28">
+    <!-- ========= FIXED-SIZE MENU ROOT (THIS IS WHAT SCALES) ========= -->
+	<StackPane fx:id="menuWrapper" alignment="CENTER">
 
-        <!-- GAME TITLE -->
-        <Label text="ULTIMATE TIC TAC TOE"
-               style="
-                 -fx-text-fill: #f5f5f5;
-                 -fx-font-size: 42px;
-                 -fx-font-weight: bold;
-                 -fx-letter-spacing: 3px;
-               "/>
+        <!-- Fixed-size root that gets scaled -->
+        <StackPane fx:id="menuRoot" alignment="CENTER">
 
-        <Label text="FRUCE"
-               style="
-                 -fx-text-fill: #aaaaaa;
-                 -fx-font-size: 14px;
-                 -fx-letter-spacing: 6px;
-               "/>
+	        <!-- Menu content -->
+	        <VBox alignment="CENTER" spacing="28">
+	
+	            <!-- TITLE -->
+	            <Label text="ULTIMATE TIC TAC TOE"
+	                   style="
+	                     -fx-text-fill: #f5f5f5;
+	                     -fx-font-size: 42px;
+	                     -fx-font-weight: bold;
+	                     -fx-letter-spacing: 3px;
+	                   "/>
+	
+	            <Label text="FRUCE"
+	                   style="
+	                     -fx-text-fill: #aaaaaa;
+	                     -fx-font-size: 14px;
+	                     -fx-letter-spacing: 6px;
+	                   "/>
+	
+	            <Region minHeight="30"/>
+	
+	            <!-- BUTTONS -->
+	            <VBox spacing="16" alignment="CENTER">
+	
+	                <Button text="OFFLINE"
+	                        onAction="#offline"
+	                        prefWidth="260"
+	                        prefHeight="52"
+	                        styleClass="menu-button"/>
+	
+	                <Button text="MULTIPLAYER"
+	                        onAction="#multiplayer"
+	                        prefWidth="260"
+	                        prefHeight="52"
+	                        styleClass="menu-button"/>
+	
+	                <Button text="SETTINGS"
+	                        onAction="#settings"
+	                        prefWidth="260"
+	                        prefHeight="48"
+	                        styleClass="menu-button-secondary"/>
+	
+	                <Button text="QUIT"
+	                        onAction="#quit"
+	                        prefWidth="260"
+	                        prefHeight="48"
+	                        styleClass="menu-button-danger"/>
+	
+	            </VBox>
+	
+	        </VBox>
+	        
+		</StackPane>  
 
-        <!-- Spacer -->
-        <Region prefHeight="30"/>
-
-        <!-- BUTTONS -->
-        <VBox spacing="16" alignment="CENTER">
-
-            <Button text="OFFLINE"
-                    onAction="#offline"
-                    prefWidth="260"
-                    prefHeight="52"
-                    styleClass="menu-button"/>
-
-            <Button text="MULTIPLAYER"
-                    onAction="#multiplayer"
-                    prefWidth="260"
-                    prefHeight="52"
-                    styleClass="menu-button"/>
-
-            <Button text="SETTINGS"
-                    onAction="#settings"
-                    prefWidth="260"
-                    prefHeight="48"
-                    styleClass="menu-button-secondary"/>
-
-            <Button text="QUIT"
-                    onAction="#quit"
-                    prefWidth="260"
-                    prefHeight="48"
-                    styleClass="menu-button-danger"/>
-
-        </VBox>
-
-    </VBox>
+    </StackPane>
 
 </StackPane>
-

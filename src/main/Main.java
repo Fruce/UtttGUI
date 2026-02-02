@@ -8,8 +8,8 @@ import network.NgrokManager;
 
 public class Main extends Application {
 
-    public static final double OUTER_PADDING = 24;
-    public static final double MIN_BOARD_SIZE = 420;
+    public static final double OUTER_PADDING = 34;
+    public static final double MIN_BOARD_SIZE = 520;
 
     @Override
     public void start(Stage stage) {
