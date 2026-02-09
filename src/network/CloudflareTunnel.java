@@ -48,7 +48,7 @@ public final class CloudflareTunnel {
 
                     String line;
                     while ((line = reader.readLine()) != null) {
-                        System.out.println("[CLOUDFLARE] " + line);
+                        //System.out.println("[CLOUDFLARE] " + line);
 
                         String url = extractTryCloudflareUrl(line);
                         if (url != null) {
