@@ -7,7 +7,11 @@ import javafx.scene.layout.StackPane;
 import main.ResizableScene;
 import main.SceneManager;
 import utils.UserSettings;
-import network.NgrokAuthManager;
+
+import javafx.scene.control.Button;
+import javafx.scene.control.Tooltip;
+import javafx.util.Duration;
+
 
 public class SettingsController implements ResizableScene {
 
@@ -25,6 +29,10 @@ public class SettingsController implements ResizableScene {
 
     @FXML
     private Label statusLabel;
+    
+    @FXML
+    private Button saveUsernameButton;
+
 
     @Override
     public StackPane getWrapper() {
@@ -43,33 +51,29 @@ public class SettingsController implements ResizableScene {
 
     @FXML
     public void initialize() {
-        // load ngrok token
-        String token = NgrokAuthManager.getToken();
-        if (token != null) {
-            tokenField.setText(token);
-        }
 
         // load username
         usernameField.setText(UserSettings.getUsername());
+        
+        installFastTooltip(saveUsernameButton, "Save");
     }
+    
+    private void installFastTooltip(Button button, String text) {
+        Tooltip tooltip = new Tooltip(text);
+        tooltip.setShowDelay(Duration.millis(120));
+        tooltip.setHideDelay(Duration.millis(50));
+        tooltip.setShowDuration(Duration.seconds(4));
+
+        tooltip.getStyleClass().add("save-tooltip");
+        button.setTooltip(tooltip);
+    }
+
 
     /* ========================
        SAVE ACTIONS
        ======================== */
 
-    @FXML
-    private void saveToken() {
-        String token = tokenField.getText().trim();
-
-        if (token.isEmpty()) {
-            statusLabel.setText("Token cannot be empty");
-            return;
-        }
-
-        NgrokAuthManager.saveToken(token);
-        statusLabel.setText("Ngrok token saved");
-    }
-
+   
     @FXML
     private void saveUsername() {
         String name = usernameField.getText().trim();

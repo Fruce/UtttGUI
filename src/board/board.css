@@ -129,11 +129,10 @@
 
 .side-pane {
     -fx-background-color: linear-gradient(
-        to bottom,
+        to left,
         #1b1b1b,
-        #111111
+        #0d0d0d
     );
-    -fx-padding: 10 0 10 0;
     -fx-spacing: 14;
 }
 
@@ -145,8 +144,11 @@
 
 .player-name {
     -fx-text-fill: #9fa4aa;
-    -fx-font-size: 24px;
+    -fx-font-size: 40px;
     -fx-font-weight: bold;
+    
+	-fx-border-color: #AFAFAF;
+    -fx-border-width: 1;
     -fx-opacity: 0.6;
 }
 
@@ -154,6 +156,11 @@
     -fx-text-fill: #ffffff;
     -fx-opacity: 1.0;
     -fx-font-weight: bold;
+    
+    -fx-border-color: #fffffF;
+    -fx-border-width: 3;
+    -fx-border-radius: 6;
+    
     -fx-effect: dropshadow(gaussian, rgba(80,160,255,0.8), 12, 0.5, 0, 0);
 }
 
@@ -163,8 +170,8 @@
    ========================= */
 
 .turn-status {
-    -fx-text-fill: #6f7378;
-    -fx-font-size: 15px;
+    -fx-fill: #AFAFAF;
+    -fx-font-size: 25px;
     -fx-font-style: italic;
     -fx-opacity: 0.85;
 }
@@ -174,26 +181,53 @@
    BUTTONS (BASE)
    ========================= */
 
+.offer-bar {
+    -fx-background-color: rgba(255,255,255,0.035);
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-border-width: 1;
+}
+
+.offer-icon {
+	-fx-opacity: 0.85;
+    -fx-background-color: transparent;
+    -fx-background-radius: 50;
+    -fx-padding: 8;
+}
+
+.offer-icon:hover {
+    -fx-opacity: 1.0;
+    -fx-cursor: hand;
+
+    -fx-background-color: rgba(255,255,255,0.08);
+}
+
+.offer-text {
+    -fx-text-fill: #b0b0b0;
+    -fx-font-size: 20px;
+    -fx-font-style: italic;
+}
+
 .side-pane .button {
-    -fx-background-color: #2b2b2b;
     -fx-text-fill: #e6e6e6;
-    -fx-font-size: 16px;
-    /*-fx-font-weight: bold;*/
+    -fx-font-size: 20px;
+    -fx-font-style: italic;
 
     -fx-padding: 10 18 10 18;
     -fx-background-radius: 0;
-    -fx-border-radius: 0;
-    -fx-border-color: #3a3a3a;
+    -fx-border-radius: 6;
+	-fx-background-color: linear-gradient(
+	    to bottom,
+	    #242424, #1a1a1a
+	);
     -fx-border-width: 0;
 }
 
-
-/* =========================
-   BUTTON HOVER
-   ========================= */
-
 .side-pane .button:hover {
-    -fx-background-color: #3a3a3a;
+    -fx-background-color: linear-gradient(
+        to bottom,
+        #3a3a3a,
+        #2a2a2a
+    );
     -fx-border-color: #5c5c5c;
     -fx-cursor: hand;
 }
@@ -239,22 +273,72 @@
    TURN TEXT
    ========================= */
 
-.turn-text {
-    -fx-fill: #cfcfcf;
-    -fx-font-size: 16px;
-    -fx-font-weight: normal;
-}
-
 .turn-x {
     -fx-fill: gold;
-    -fx-font-size: 18px;
+    -fx-font-size: 40px;
     -fx-font-weight: bold;
 }
 
 .turn-o {
     -fx-fill: #ff4d4d;
-    -fx-font-size: 18px;
+    -fx-font-size: 40px;
     -fx-font-weight: bold;
 }
+
+.esc-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.55);
+}
+
+.esc-overlay {
+    -fx-background-color: rgba(20, 20, 20, 0.25);
+    -fx-border-color: rgba(255, 255, 255, 0.25);
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+
+    -fx-padding: 28 40 28 40;
+}
+
+.esc-panel {
+    -fx-background-color: rgba(20, 20, 20, 0.50);
+
+    -fx-border-color: rgba(255, 255, 255, 0.35);
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+
+    -fx-padding: 28 40 28 40;
+}
+
+.esc-title {
+    -fx-text-fill: white;
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+}
+
+.esc-leave-btn {
+    -fx-background-color: transparent;
+
+    -fx-border-color: #ff3b3b;
+    -fx-border-width: 2;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+
+    -fx-text-fill: #ff3b3b;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+
+    -fx-padding: 10 26 10 26;
+}
+
+.esc-leave-btn:hover {
+    -fx-background-color: rgba(255, 60, 60, 0.15);
+    -fx-cursor: hand;
+}
+
+.esc-leave-btn:pressed {
+    -fx-background-color: rgba(255, 60, 60, 0.25);
+}
+
 
 

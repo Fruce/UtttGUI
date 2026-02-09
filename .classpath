@@ -17,5 +17,8 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="C:/Program Files/Java/webSocket/Java-WebSocket-1.5.6.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/Java/webSocket/slf4j-api-2.0.13.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/Java/webSocket/slf4j-simple-2.0.13.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

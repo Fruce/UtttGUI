@@ -22,7 +22,7 @@ public final class NativeTools {
         }
     }
 
-    public static Path getNgrokPath() {
-        return getAppDir().resolve("tools/ngrok.exe");
+    public static Path getCloudflaredPath() {
+        return getAppDir().resolve("tools/cloudflared.exe");
     }
 }

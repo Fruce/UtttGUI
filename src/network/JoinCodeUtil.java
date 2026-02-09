@@ -1,82 +1,38 @@
 package network;
 
-import java.net.URI;
+public final class JoinCodeUtil {
 
-public class JoinCodeUtil {
+    private static final String DOMAIN = ".trycloudflare.com";
 
-    private static final String DOMAIN = "tcp.in.ngrok.io";
-    private static final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private JoinCodeUtil() {}
 
-    /*
-     * Encode:
-     * tcp://0.tcp.in.ngrok.io:19284 → AACBXU (always 6 letters)
-     */
-    public static String encode(String tcpUrl) {
-        URI uri = URI.create(tcpUrl);
+    // https://abc-def.trycloudflare.com -> abc-def
+    public static String extractCode(String fullUrl) {
+        if (fullUrl == null) return null;
 
-        String host = uri.getHost();   // 0.tcp.in.ngrok.io
-        int port = uri.getPort();      // 19284
+        fullUrl =  fullUrl.replace("|", "").trim();
 
-        if (host == null || port == -1) {
-            throw new IllegalArgumentException("Invalid ngrok TCP URL");
-        }
+        fullUrl = fullUrl.replace("https://", "")
+                         .replace("http://", "");
+        
+        System.out.println("FULL URL: "+fullUrl);
+        if (!fullUrl.endsWith(DOMAIN)) return null;
 
-        int node = Integer.parseInt(host.split("\\.")[0]);
-
-        String nodePart = padLeft(toLetters(node), 2);
-        String portPart = padLeft(toLetters(port), 4);
-
-        return nodePart + portPart;
+        return fullUrl.substring(0, fullUrl.length() - DOMAIN.length());
     }
 
     /*
-     * Decode:
-     * AACBXU → tcp://0.tcp.in.ngrok.io:19284
+     * WebSocket version for client connections
      */
-    public static String decode(String code) {
-        if (code == null || code.length() != 6) {
+    public static String buildWebSocketUrl(String code) {
+        if (code == null || code.isBlank()) {
             return null;
         }
 
-        try {
-            String nodePart = code.substring(0, 2);
-            String portPart = code.substring(2, 6);
-
-            int node = fromLetters(nodePart);
-            int port = fromLetters(portPart);
-
-            return node + "." + DOMAIN + ":" + port;
-
-        } catch (Exception e) {
+        if (!code.matches("[a-z0-9-]+")) {
             return null;
         }
-    }
 
-    /* ================= helpers ================= */
-
-    private static String toLetters(int n) {
-        if (n == 0) return "A";
-
-        StringBuilder sb = new StringBuilder();
-        while (n > 0) {
-            sb.append(ALPHABET.charAt(n % 26));
-            n /= 26;
-        }
-        return sb.reverse().toString();
-    }
-
-    private static int fromLetters(String s) {
-        int n = 0;
-        for (char c : s.toCharArray()) {
-            if (c < 'A' || c > 'Z') {
-                throw new IllegalArgumentException();
-            }
-            n = n * 26 + (c - 'A');
-        }
-        return n;
-    }
-
-    private static String padLeft(String s, int len) {
-        return "A".repeat(Math.max(0, len - s.length())) + s;
+        return "wss://" + code + DOMAIN;
     }
 }

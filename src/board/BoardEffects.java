@@ -48,6 +48,7 @@ public class BoardEffects {
     }
 
     public static void highlightBigCell(int nextBigIndex, char mark) {
+    		//System.out.println("Highlighting for: "+mark);
 
         // grab new highlight/cell first
         Pane newHighlight = BoardMaker.bigHighlight(nextBigIndex)[0];
@@ -67,7 +68,7 @@ public class BoardEffects {
             return;
         }
 
-        // DIFFERENT board → exit old
+        // DIFFERENT board -> exit old
         if (currentBigIndex != -1) {
             Pane oldHighlight = BoardMaker.bigHighlight(currentBigIndex)[0];
             Pane oldCell      = BoardMaker.bigHighlight(currentBigIndex)[2];
@@ -151,19 +152,58 @@ public class BoardEffects {
     
     public static void showGameOver(char winner) {
 
-        StackPane boardRoot = BoardMaker.getBoardRoot();
-
         BoardMaker.getGameOverWinner().setText(String.valueOf(winner));
         BoardMaker.getGameOverWins().setText("Wins!");
 
         BLUR.setWidth(0);
         BLUR.setHeight(0);
 
-        boardRoot.setEffect(BLUR);
+        BoardMaker.getBoardContent().setEffect(BLUR);
         BoardMaker.getGameOverOverlay().setVisible(true);
 
         BoardAnimations.playGameOver();          // text animation
         BoardAnimations.playGameOverBlur();      // blur animation
+    }
+    
+    
+    public static void resetAll() {
+
+        // Clear highlights
+        clearSmallHighlight();
+        clearFreeMoveHighlight();
+
+        // Clear marks from all cells
+        for (StackPane[] big : BoardMaker.getCells()) {
+            for (StackPane cell : big) {
+                Text markNode = (Text) cell.getChildren().get(0);
+                markNode.setText("");
+                markNode.getStyleClass().removeAll("mark-x", "mark-o");
+            }
+        }
+
+        // Restore small boards
+        for (StackPane layer : BoardMaker.getGameplayLayers()) {
+            layer.setOpacity(1.0);
+            layer.setVisible(true);
+        }
+
+        // Hide local win marks
+        for (Text win : BoardMaker.getLocalWinMarks()) {
+            win.setVisible(false);
+            win.getStyleClass().removeAll(
+                "red-local-win-mark",
+                "gold-local-win-mark"
+            );
+        }
+
+        // Hide game over
+        BoardMaker.getBoardRoot().setEffect(null);
+        BoardMaker.getGameOverOverlay().setVisible(false);
+        BoardMaker.getGameOverWinner().setText("");
+        BoardMaker.getGameOverWins().setText("");
+
+        // Reset internal tracking
+        currentBigIndex = -1;
     }
 
 }

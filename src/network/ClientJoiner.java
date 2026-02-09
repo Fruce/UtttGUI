@@ -1,43 +1,79 @@
 package network;
 
-import java.io.*;
-import java.net.Socket;
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
+
+import java.net.URI;
+import java.nio.ByteBuffer;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import network.packetes.MovePacket;
+import network.packetes.NewGameAcceptPacket;
+import network.packetes.NewGameDenyPacket;
+import network.packetes.NewGameOfferPacket;
+import network.packetes.TakebackAcceptPacket;
+import network.packetes.TakebackDenyPacket;
+import network.packetes.TakebackOfferPacket;
 import network.packetes.HandshakePacket;
 import utils.UserSettings;
 
-public class ClientJoiner {
+public class ClientJoiner implements NetworkEndpoint {
 
-    private Socket socket;
-    private ObjectOutputStream out;
-    private ObjectInputStream in;
-
+    private WebSocketClient client;
+    private final BlockingQueue<Object> inbox = new LinkedBlockingQueue<>();
     private String opponentName;
 
-    public void connect(String host, int port)
-            throws IOException, ClassNotFoundException {
+    /* ================= CONNECT ================= */
 
-        socket = new Socket(host, port);
-        System.out.println("[CLIENT] Connected to host!");
+    public void connect(String inviteLink) throws Exception {
+        String wsUrl = inviteLink.replace("https://", "wss://");
 
-        out = new ObjectOutputStream(socket.getOutputStream());
-        in = new ObjectInputStream(socket.getInputStream());
+        client = new WebSocketClient(new URI(wsUrl)) {
 
-        /* ================= HANDSHAKE ================= */
+            @Override
+            public void onOpen(ServerHandshake handshake) {
+                System.out.println("[CLIENT] Connected to host!");
 
-        // send client username
-        HandshakePacket clientHello =
-                new HandshakePacket(UserSettings.getUsername());
-        out.writeObject(clientHello);
-        out.flush();
+                HandshakePacket hello =
+                        new HandshakePacket(UserSettings.getUsername());
+                send(PacketCodec.encode(hello));
+            }
 
-        // receive host username
-        HandshakePacket hostHello =
-                (HandshakePacket) in.readObject();
+            @Override
+            public void onMessage(ByteBuffer buffer) {
+                byte[] data = new byte[buffer.remaining()];
+                buffer.get(data);
+                inbox.offer(PacketCodec.decode(data));
+            }
+
+            @Override
+            public void onMessage(String message) {
+                // unused (binary protocol only)
+            }
+
+            @Override
+            public void onClose(int code, String reason, boolean remote) {
+                System.out.println("[CLIENT] Disconnected: " + reason);
+            }
+
+            @Override
+            public void onError(Exception ex) {
+                ex.printStackTrace();
+            }
+        };
+
+        // ONLY wait for socket open
+        client.connectBlocking();
+    }
+
+    /* ================= HANDSHAKE ================= */
+
+    public String waitForOpponent() throws InterruptedException {
+        Object packet = inbox.take();
+        HandshakePacket hostHello = (HandshakePacket) packet;
         opponentName = hostHello.getUsername();
-
-        System.out.println("[CLIENT] Opponent username: " + opponentName);
+        return opponentName;
     }
 
     public String getOpponentName() {
@@ -45,21 +81,56 @@ public class ClientJoiner {
     }
 
     /* ================= GAME ================= */
-
-    public void sendMove(int big, int small) throws IOException {
-        out.writeObject(new MovePacket(big, small));
-        out.flush();
+    
+    public Object receive() throws InterruptedException {
+        return inbox.take(); // ANY packet
+    }
+    
+    @Override
+    public void sendMove(int big, int small) {
+        client.send(PacketCodec.encode(new MovePacket(big, small)));
+    }
+    
+    // NEW GAME 
+    
+    @Override
+    public void sendNewGameOffer() {
+    		client.send(PacketCodec.encode(new NewGameOfferPacket()));
     }
 
-    public MovePacket receiveMove() throws IOException, ClassNotFoundException {
-        return (MovePacket) in.readObject();
+    @Override
+    public void sendNewGameAccept() {
+    		client.send(PacketCodec.encode(new NewGameAcceptPacket()));
+    }
+
+    @Override
+    public void sendNewGameDeny() {
+    		client.send(PacketCodec.encode(new NewGameDenyPacket()));
+    }
+    
+    // TAKEBACK
+    
+    @Override
+    public void sendTakebackOffer() {
+    		client.send(PacketCodec.encode(new TakebackOfferPacket()));
+    }
+
+    @Override
+    public void sendTakebackAccept() {
+    		client.send(PacketCodec.encode(new TakebackAcceptPacket()));
+    }
+
+    @Override
+    public void sendTakebackDeny() {
+    		client.send(PacketCodec.encode(new TakebackDenyPacket()));
     }
 
     /* ================= CLEANUP ================= */
 
-    public void close() throws IOException {
-        in.close();
-        out.close();
-        socket.close();
+    @Override
+    public void close() {
+        if (client != null && client.isOpen()) {
+            client.close(1000, "Client leaving");
+        }
     }
 }

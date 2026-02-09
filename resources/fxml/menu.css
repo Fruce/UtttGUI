@@ -1,49 +1,167 @@
+/* =========================================================
+   GLOBAL BUTTONS (menus, general UI)
+   ========================================================= */
+
+
+/* ===== PRIMARY MENU BUTTON ===== */
 .menu-button {
     -fx-background-color: transparent;
-    -fx-border-color: #f5c400;
-    -fx-border-width: 2;
-    -fx-text-fill: #f5c400;
-    -fx-font-size: 16px;
+    -fx-border-color: #f5c77a;
+    -fx-border-width: 1.8;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+
+    -fx-text-fill: #f5c77a;
+    -fx-font-size: 15px;
     -fx-font-weight: bold;
     -fx-letter-spacing: 2px;
+
+    -fx-padding: 12 12;
     -fx-cursor: hand;
+
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 
 .menu-button:hover {
-    -fx-background-color: rgba(245, 196, 0, 0.12);
-    -fx-effect: dropshadow(gaussian, #f5c400, 18, 0.4, 0, 0);
+    -fx-background-color: rgba(245,199,122,0.14);
+    -fx-effect: dropshadow(gaussian, rgba(245,199,122,0.45), 14, 0.3, 0, 0);
 }
 
 .menu-button:pressed {
-    -fx-background-color: rgba(245, 196, 0, 0.25);
+    -fx-background-color: rgba(245,199,122,0.28);
+    -fx-effect: none;
 }
 
+/* ===== SECONDARY MENU BUTTON (Back, Cancel) ===== */
 .menu-button-secondary {
     -fx-background-color: transparent;
-    -fx-border-color: #aaaaaa;
+    -fx-border-color: #888;
     -fx-border-width: 1.5;
-    -fx-text-fill: #aaaaaa;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+
+    -fx-text-fill: #ccc;
     -fx-font-size: 14px;
-    -fx-letter-spacing: 2px;
+    -fx-letter-spacing: 1px;
+
+    -fx-padding: 10 30;
     -fx-cursor: hand;
+
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 
 .menu-button-secondary:hover {
-    -fx-text-fill: #ffffff;
     -fx-border-color: #ffffff;
+    -fx-text-fill: #ffffff;
+    -fx-background-color: rgba(255,255,255,0.08);
 }
 
+/* ===== DANGER MENU BUTTON (Leave / Quit) ===== */
 .menu-button-danger {
     -fx-background-color: transparent;
     -fx-border-color: #ff4d4d;
-    -fx-border-width: 1.5;
+    -fx-border-width: 1.6;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+
     -fx-text-fill: #ff4d4d;
     -fx-font-size: 14px;
+    -fx-font-weight: bold;
     -fx-letter-spacing: 2px;
+
+    -fx-padding: 12 34;
     -fx-cursor: hand;
+
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 
 .menu-button-danger:hover {
-    -fx-background-color: rgba(255, 77, 77, 0.15);
-    -fx-effect: dropshadow(gaussian, #ff4d4d, 16, 0.4, 0, 0);
+    -fx-background-color: rgba(255,77,77,0.18);
+    -fx-effect: dropshadow(gaussian, rgba(255,77,77,0.55), 14, 0.3, 0, 0);
 }
+
+.menu-button-danger:pressed {
+    -fx-background-color: rgba(255,77,77,0.32);
+
+}
+
+/* =========================================================
+   SETTINGS SCREEN ONLY
+   ========================================================= */
+
+.settings-root .settings-label {
+    -fx-text-fill: #f5c77a;
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1px;
+}
+
+.settings-root .settings-field {
+    -fx-background-color: linear-gradient(#1a1a1a, #141414);
+    
+    -fx-font-weight: bold;
+    -fx-text-fill: #f5c400;
+    -fx-font-size: 16px;
+    
+    -fx-prompt-text-fill: #777777;
+    -fx-border-color: #2a2a2a;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 10 12;
+}
+
+
+
+.settings-root .settings-field:focused {
+    -fx-border-color: #f5c77a;
+    -fx-effect: dropshadow(gaussian, rgba(245,199,122,0.25), 10, 0, 0, 0);
+}
+
+.settings-root .settings-status {
+    -fx-text-fill: #9ac7ff;
+    -fx-font-size: 13px;
+}
+
+/* SETTINGS save icon buttons */
+.settings-root .icon-button {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8;
+
+    -fx-border-color: #f5c77a;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+
+    -fx-padding: 10;
+    -fx-cursor: hand;
+}
+
+.settings-root .icon-button:hover {
+    -fx-background-color: rgba(245,199,122,0.15);
+}
+
+.settings-root .icon-button:pressed {
+    -fx-background-color: rgba(245,199,122,0.25);
+}
+
+/* SETTINGS tooltips */
+.settings-root .tooltip {
+    -fx-background-color: #1a1a1a;
+    -fx-text-fill: #f5c77a;
+    -fx-font-size: 12px;
+    -fx-padding: 8 12;
+    -fx-background-radius: 6;
+    -fx-border-color: #f5c77a;
+    -fx-border-radius: 6;
+}
+
+
+
+
+

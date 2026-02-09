@@ -1,6 +1,5 @@
 package sceneControllers;
 
-import java.io.IOException;
 
 import board.SidePane;
 import game.GameController;
@@ -8,13 +7,13 @@ import game.GameMode;
 import game.PlayerSource;
 import javafx.application.Platform;
 import main.SceneManager;
-import move.MoveSwitcher;
+
 import network.ClientJoiner;
+import network.CloudflareTunnel;
 import network.HostServer;
 import network.JoinCodeUtil;
 import network.NetworkListener;
-import network.NgrokAuthManager;
-import network.NgrokManager;
+
 
 public class GameLauncher {
 
@@ -44,102 +43,108 @@ public class GameLauncher {
     }
 
     /* ================= MULTIPLAYER HOST ================= */
-    public static void host() {
-        if (!NgrokAuthManager.hasToken()) {
-            Platform.runLater(() ->
-                SceneManager.switchTo("settings.fxml")
-            );
-            return;
-        }
+	public static void host() {
 
-        NgrokManager.startTunnel(PORT);
+	    HostServer host = new HostServer(PORT);
+	
+	    final HostWaitController[] waitUIRef = new HostWaitController[1];
+	
+	    Platform.runLater(() -> {
+	        waitUIRef[0] =
+	            SceneManager.switchToAndGetController("host-wait.fxml");
+	        waitUIRef[0].setHostServer(host);
+	        waitUIRef[0].showStarting();
+	    });
+	
+	    CloudflareTunnel.startTunnel(PORT, fullUrl -> {
+	        String joinCode = JoinCodeUtil.extractCode(fullUrl);
+	        System.out.println("JONCODE: " + joinCode);
+	        Platform.runLater(() -> waitUIRef[0].setJoinCode(joinCode));
+	    });
+	
+	    GameController controller =
+	        new GameController(PlayerSource.LOCAL, PlayerSource.NETWORK);
+	    controller.setHostServer(host);
+	
+	    new Thread(() -> {
+	        try {
+	            host.startServer(); // waits for handshake
+	
+	            String opponentName = host.getOpponentName();
+	            controller.setOpponentName(opponentName);
+	
+	            // CREATE LISTENER FIRST
+	            NetworkListener listener =
+	                new NetworkListener(controller, host);
+	            listener.start();
+	
+	            Platform.runLater(() -> {
+	                SceneManager.startMultiplayerGame(
+	                    controller,
+	                    listener,
+	                    host
+	                );
+	
+	                SidePane.setOpponentName(opponentName);
+	                SidePane.setActivePlayer(true);
+	                SidePane.updateTurnText(true, controller.getCurrentMark());
+	            });
+	
+	        } catch (Exception e) {
+	            System.out.println("[HOST] Host cancelled");
+	        }
+	    }, "host-server-thread").start();
+	}
 
-        HostServer host = new HostServer();
 
-        Platform.runLater(() -> {
-            HostWaitController waitUI =
-                SceneManager.switchToAndGetController("host-wait.fxml");
 
-            waitUI.setHostServer(host);
-            waitUI.showStarting();
-
-            NgrokManager.fetchPublicUrl(url -> {
-                String joinCode = JoinCodeUtil.encode(url);
-
-                Platform.runLater(() -> {
-                    waitUI.setJoinCode(joinCode);
-                });
-            });
-        });
-
-        GameController controller =
-            new GameController(PlayerSource.LOCAL, PlayerSource.NETWORK);
-
-        controller.setHostServer(host);
-
-        new Thread(() -> {
-            try {
-                // BLOCKS until client connects + handshake completes
-                host.start(PORT);
-
-                String opponentName = host.getOpponentName();
-
-                Platform.runLater(() -> {
-                    // switch to board
-                    SceneManager.startMultiplayerGame(controller);
-                    SidePane.setOpponentName(opponentName);
-                    SidePane.setActivePlayer(true);
-                    SidePane.updateTurnText(true, MoveSwitcher.switchMove(controller.getCurrentMark()));
-                });
-
-                new NetworkListener(controller, host).start();
-
-            } catch (IOException | ClassNotFoundException e) {
-                System.out.println("[HOST] Host cancelled");
-            }
-        }, "host-server-thread").start();
-    }
   
 
     /* ================= MULTIPLAYER JOIN ================= */
 
-    public static void join(String joinCode) {
-        try {
-            String url = JoinCodeUtil.decode(joinCode);
+	public static void join(String joinCode) {
 
-            if (url == null) {
-                throw new IllegalArgumentException("Invalid or expired join code");
-            }
+	    String wsUrl = JoinCodeUtil.buildWebSocketUrl(joinCode);
+	    if (wsUrl == null) {
+	        throw new IllegalArgumentException("Invalid or expired join code");
+	    }
+	
+	    ClientJoiner client = new ClientJoiner();
+	
+	    GameController controller =
+	        new GameController(PlayerSource.NETWORK, PlayerSource.LOCAL);
+	    controller.setClientJoiner(client);
+	
+	    new Thread(() -> {
+	        try {
+	            client.connect(wsUrl);
+	            String opponentName = client.waitForOpponent();
+	            controller.setOpponentName(opponentName);
 
-            // tcp://0.tcp.in.ngrok.io:17068
+	            NetworkListener listener =
+	                new NetworkListener(controller, client);
+	            listener.start();
+	
+	            Platform.runLater(() -> {
+	                SceneManager.startMultiplayerGame(
+	                    controller,
+	                    listener,
+	                    client
+	                );
+	
+	                SidePane.setOpponentName(opponentName);
+	                SidePane.setActivePlayer(false);
+	                SidePane.updateTurnText(false, controller.getCurrentMark()
+	                );
+	            });
+	
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+	    }).start();
+	}
 
-            String[] parts = url.split(":");
 
-            String hostIp = parts[0];
-            int port = Integer.parseInt(parts[1]);
 
-            System.out.println("[JOIN] Connecting to " + hostIp + ":" + port);
-
-            ClientJoiner client = new ClientJoiner();
-            client.connect(hostIp, port);
-            String opponentName = client.getOpponentName();
-
-            GameController controller =
-                new GameController(PlayerSource.NETWORK, PlayerSource.LOCAL);
-
-            controller.setClientJoiner(client);
-            new NetworkListener(controller, client).start();
-
-            Platform.runLater(() -> {
-                SceneManager.startMultiplayerGame(controller);
-                SidePane.setOpponentName(opponentName);
-                SidePane.setActivePlayer(false);
-                SidePane.updateTurnText(false, MoveSwitcher.switchMove(controller.getCurrentMark()));
-            });
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to join game", e);
-        }
-    }
 
 }

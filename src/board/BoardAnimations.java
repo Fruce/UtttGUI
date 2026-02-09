@@ -171,7 +171,7 @@ public final class BoardAnimations {
 	    pulse.setToX(1.01);
 	    pulse.setToY(1.01);
 	    pulse.setAutoReverse(true);
-	    pulse.setCycleCount(2); // up → back
+	    pulse.setCycleCount(2); // up -> back
 	
 	    // Play sequence
 	    new SequentialTransition(appear, pulse).play();

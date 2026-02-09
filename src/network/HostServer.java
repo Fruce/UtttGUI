@@ -1,45 +1,67 @@
 package network;
 
-import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import org.java_websocket.server.WebSocketServer;
+import org.java_websocket.WebSocket;
+import org.java_websocket.handshake.ClientHandshake;
+
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import network.packetes.MovePacket;
+import network.packetes.NewGameAcceptPacket;
+import network.packetes.NewGameDenyPacket;
+import network.packetes.NewGameOfferPacket;
+import network.packetes.TakebackAcceptPacket;
+import network.packetes.TakebackDenyPacket;
+import network.packetes.TakebackOfferPacket;
 import network.packetes.HandshakePacket;
 import utils.UserSettings;
 
-public class HostServer {
+public class HostServer extends WebSocketServer implements NetworkEndpoint {
 
-    private ServerSocket serverSocket;
-    private Socket clientSocket;
-
-    private ObjectOutputStream out;
-    private ObjectInputStream in;
-
+    private WebSocket client;
     private String opponentName;
 
-    public void start(int port) throws IOException, ClassNotFoundException {
-        serverSocket = new ServerSocket(port);
+    private final BlockingQueue<Object> inbox = new LinkedBlockingQueue<>();
+
+    public HostServer(int port) {
+        super(new InetSocketAddress("localhost", port));
+    }
+
+    /* ================= CONNECTION ================= */
+
+    @Override
+    public void onOpen(WebSocket conn, ClientHandshake handshake) {
+        client = conn;
+        System.out.println("[HOST] Client connected!");
+    }
+
+    @Override
+    public void onMessage(WebSocket conn, ByteBuffer buffer) {
+        byte[] data = new byte[buffer.remaining()];
+        buffer.get(data);
+
+        Object packet = PacketCodec.decode(data);
+        inbox.offer(packet);
+    }
+
+    /* ================= HANDSHAKE ================= */
+
+    public void startServer() throws Exception {
+        start();
         System.out.println("[HOST] Waiting for client...");
 
-        clientSocket = serverSocket.accept();
-        System.out.println("[HOST] Client connected!");
-
-        out = new ObjectOutputStream(clientSocket.getOutputStream());
-        in = new ObjectInputStream(clientSocket.getInputStream());
-
-        /* ================= HANDSHAKE ================= */
-
-        // receive client username
-        HandshakePacket clientHello =
-                (HandshakePacket) in.readObject();
+        // wait for handshake
+        Object packet = inbox.take();
+        HandshakePacket clientHello = (HandshakePacket) packet;
         opponentName = clientHello.getUsername();
 
         // send host username
         HandshakePacket hostHello =
                 new HandshakePacket(UserSettings.getUsername());
-        out.writeObject(hostHello);
-        out.flush();
+        sendPacket(hostHello);
 
         System.out.println("[HOST] Opponent username: " + opponentName);
     }
@@ -50,32 +72,91 @@ public class HostServer {
 
     /* ================= GAME ================= */
 
-    public void sendMove(int big, int small) throws IOException {
-        out.writeObject(new MovePacket(big, small));
-        out.flush();
+    public Object receive() throws InterruptedException {
+        return inbox.take(); // ANY packet
+    }
+    
+    public void sendMove(int big, int small) {
+        sendPacket(new MovePacket(big, small));
+    }
+    
+    // NEW GAME
+    
+    @Override
+    public void sendNewGameOffer() {
+        sendPacket(new NewGameOfferPacket());
     }
 
-    public MovePacket receiveMove() throws IOException, ClassNotFoundException {
-        return (MovePacket) in.readObject();
+    @Override
+    public void sendNewGameAccept() {
+        sendPacket(new NewGameAcceptPacket());
     }
 
-    /* ================= CLEANUP ================= */
-
-    public void close() throws IOException {
-        in.close();
-        out.close();
-        clientSocket.close();
-        serverSocket.close();
+    @Override
+    public void sendNewGameDeny() {
+        sendPacket(new NewGameDenyPacket());
+    }
+    
+    // TAKEBACKS
+    
+    @Override
+    public void sendTakebackOffer() {
+        sendPacket(new TakebackOfferPacket());
     }
 
-    public void stop() {
+    @Override
+    public void sendTakebackAccept() {
+        sendPacket(new TakebackAcceptPacket());
+    }
+
+    @Override
+    public void sendTakebackDeny() {
+        sendPacket(new TakebackDenyPacket());
+    }
+
+    /* ================= UTIL ================= */
+
+    private void sendPacket(Object packet) {
+        byte[] encoded = PacketCodec.encode(packet);
+        client.send(encoded);
+    }
+    
+    public void close() {
         try {
-            if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close();
+            if (client != null && client.isOpen()) {
+                client.close(1000, "Server shutting down");
             }
-            System.out.println("[HOST] Server stopped");
-        } catch (IOException e) {
+            this.stop();
+            System.out.println("[HOST] Server closed");
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+	@Override
+	public void onClose(WebSocket conn, int code, String reason, boolean arg3) {
+	    System.out.println("[HOST] Client disconnected: " + reason);
+	    client = null;
+		
+	}
+
+	@Override
+	public void onError(WebSocket arg0, Exception ex) {
+		ex.printStackTrace();
+		
+	}
+
+	@Override
+	public void onMessage(WebSocket arg0, String arg1) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onStart() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
+

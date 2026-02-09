@@ -1,14 +1,14 @@
 package board;
 
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-
 import main.SceneManager;
 import utils.UserSettings;
 
@@ -26,60 +26,114 @@ public final class SidePane {
     private static Text turnText;
     private static Text turnSymbol;
 
+    private static Button newGameBtn;
+    private static Button takebackBtn;
+
+    private static StackPane newGameOfferBar;
+    private static StackPane takebackOfferBar;
+
+    private static VBox newGameNormalBox;
+    private static VBox newGameOfferSentBox;
+
+    private static VBox takebackNormalBox;
+    private static VBox takebackOfferSentBox;
+
+    private static final double ROW_HEIGHT =
+            SceneManager.BOARD_DESIGN_SIZE / 6;
+
     /* ======================
-       PUBLIC API
+       VISIBILITY HELPERS
+       ====================== */
+
+    private static void showOnly(Node visible, Node... hidden) {
+        visible.setVisible(true);
+        visible.setManaged(true);
+        for (Node n : hidden) {
+            n.setVisible(false);
+            n.setManaged(false);
+        }
+    }
+
+    /* ======================
+       PUBLIC UI STATE API
+       ====================== */
+
+    public static void showNormalControls() {
+        showOnly(newGameNormalBox, newGameOfferSentBox, newGameOfferBar);
+    }
+
+    public static void showNewGameOfferSent() {
+        showOnly(newGameOfferSentBox, newGameNormalBox, newGameOfferBar);
+    }
+
+    public static void showNewGameOfferReceived() {
+        showOnly(newGameOfferBar, newGameNormalBox, newGameOfferSentBox);
+    }
+
+    public static void showTakebackNormalControls() {
+        showOnly(takebackNormalBox, takebackOfferSentBox, takebackOfferBar);
+    }
+
+    public static void showTakebackOfferSent() {
+        showOnly(takebackOfferSentBox, takebackNormalBox, takebackOfferBar);
+    }
+
+    public static void showTakebackOfferReceived() {
+        showOnly(takebackOfferBar, takebackNormalBox, takebackOfferSentBox);
+    }
+
+    /* ======================
+       TURN / PLAYER STATUS
        ====================== */
 
     public static void setOpponentName(String name) {
-        if (opponentName != null && name != null) {
-            opponentName.setText(name);
-        }
+        opponentName.setText(name);
     }
 
-    /**
-     * @param yourTurn true  = highlight your name
-     *                 false = highlight opponent name
-     */
     public static void setActivePlayer(boolean yourTurn) {
-        if (opponentName == null || yourName == null) return;
-
         opponentName.getStyleClass().remove("active");
         yourName.getStyleClass().remove("active");
-
-        if (yourTurn) {
-            yourName.getStyleClass().add("active");
-        } else {
-            opponentName.getStyleClass().add("active");
-        }
+        (yourTurn ? yourName : opponentName).getStyleClass().add("active");
     }
 
-    /**
-     * Updates the center turn indicator.
-     * @param yourTurn whether it's the local player's turn
-     * @param symbol   'X' or 'O'
-     */
     public static void updateTurnText(boolean yourTurn, char symbol) {
-        if (turnText == null || turnSymbol == null) return;
+        turnSymbol.getStyleClass().clear();
+        turnText.getStyleClass().clear();
 
-        // Main text
-        turnText.setText(
-            yourTurn ? "Your turn" : "Waiting for opponent"
-        );
-
-        // Symbol
-        turnSymbol.setText(String.valueOf(symbol));
-
-        // Reset styles
-        turnSymbol.getStyleClass().removeAll("turn-x", "turn-o");
-        turnText.getStyleClass().removeAll("turn-x", "turn-o");
-
-        if (symbol == 'X') {
-            turnSymbol.getStyleClass().add("turn-x");
-            turnText.getStyleClass().add("turn-x");
-        } else {
-            turnSymbol.getStyleClass().add("turn-o");
-            turnText.getStyleClass().add("turn-o");
+        if (!yourTurn) {
+            turnText.setText("Waiting for opponent...");
+            turnText.getStyleClass().add("turn-status");
+            turnSymbol.setText("");
+            return;
         }
+
+        turnText.setText("Your turn");
+        turnText.getStyleClass().add(symbol == 'X' ? "turn-x" : "turn-o");
+        turnSymbol.setText(String.valueOf(symbol));
+        turnSymbol.getStyleClass().add(symbol == 'X' ? "turn-x" : "turn-o");
+    }
+
+    /* ======================
+       BUTTON ACCESSORS
+       ====================== */
+
+    public static Button getNewGameButton() { return newGameBtn; }
+    public static Button getTakebackButton() { return takebackBtn; }
+
+    public static Label getNewGameAccept() {
+        return (Label) ((HBox) newGameOfferBar.getChildren().get(0)).getChildren().get(2);
+    }
+
+    public static Label getNewGameDeny() {
+        return (Label) ((HBox) newGameOfferBar.getChildren().get(0)).getChildren().get(0);
+    }
+
+    public static Label getTakebackAccept() {
+        return (Label) ((HBox) takebackOfferBar.getChildren().get(0)).getChildren().get(2);
+    }
+
+    public static Label getTakebackDeny() {
+        return (Label) ((HBox) takebackOfferBar.getChildren().get(0)).getChildren().get(0);
     }
 
     /* ======================
@@ -88,60 +142,143 @@ public final class SidePane {
 
     public static VBox create() {
 
-        /* ---------- TOP (OPPONENT) ---------- */
+        opponentName = makeNameLabel("Opponent");
+        yourName = makeNameLabel("");
+        yourName.textProperty().bind(UserSettings.usernameProperty());
 
-        opponentName = new Label("Opponent");
-        opponentName.getStyleClass().add("player-name");
+        /* ---------- NEW GAME ---------- */
 
-        Button newGameBtn = new Button("New Game");
-        newGameBtn.setMaxWidth(Double.MAX_VALUE);
+        newGameBtn = makeActionButton("New Game");
         newGameBtn.getStyleClass().add("new-game-btn");
+        
+        newGameNormalBox = new VBox(newGameBtn);
 
-        VBox top = new VBox(15, opponentName, newGameBtn);
-        top.setAlignment(Pos.TOP_CENTER);
-        top.setFillWidth(true);
+        newGameOfferSentBox = makeSentButtonBox("New Game Offer Sent");
 
-        /* ---------- CENTER (TURN STATUS) ---------- */
+        newGameOfferBar =
+                makeOfferBar("Opponent offered\nNew Game");
 
-        turnText = new Text("Waiting for opponent");
-        turnText.getStyleClass().add("turn-text");
+        StackPane newGameStack = new StackPane(
+                newGameNormalBox,
+                newGameOfferSentBox,
+                newGameOfferBar
+        );
+
+        showNormalControls();
+
+        VBox top = new VBox(opponentName, newGameStack);
+
+        /* ---------- TURN ---------- */
+
+        turnText = new Text("Waiting for opponent...");
         turnText.setTextAlignment(TextAlignment.CENTER);
+        turnText.getStyleClass().add("turn-status");
 
         turnSymbol = new Text("X");
         turnSymbol.getStyleClass().add("turn-x");
 
         VBox centerBox = new VBox(6, turnText, turnSymbol);
         centerBox.setAlignment(Pos.CENTER);
+        VBox.setVgrow(centerBox, Priority.ALWAYS);
 
-        StackPane center = new StackPane(centerBox);
-        center.setAlignment(Pos.CENTER);
-        VBox.setVgrow(center, Priority.ALWAYS);
+        /* ---------- TAKEBACK ---------- */
 
-        /* ---------- BOTTOM (YOU) ---------- */
-
-        yourName = new Label();
-        yourName.getStyleClass().add("player-name");
-        yourName.textProperty().bind(UserSettings.usernameProperty());
-
-        Button takebackBtn = new Button("Offer Takeback");
-        takebackBtn.setMaxWidth(Double.MAX_VALUE);
+        takebackBtn = makeActionButton("Offer Takeback");
         takebackBtn.getStyleClass().add("takeback-btn");
+        takebackNormalBox = new VBox(takebackBtn);
 
-        VBox bottom = new VBox(15, takebackBtn, yourName);
-        bottom.setAlignment(Pos.BOTTOM_CENTER);
-        bottom.setFillWidth(true);
+        takebackOfferSentBox = makeSentButtonBox("Takeback Offer Sent");
 
-        /* ---------- ROOT ---------- */
+        takebackOfferBar =
+                makeOfferBar("Opponent offered\nTakeback");
 
-        VBox sidePane = new VBox(16, top, center, bottom);
-        sidePane.setPrefWidth(SceneManager.SIDE_PANE_WIDTH);
-        sidePane.setMinWidth(SceneManager.SIDE_PANE_WIDTH);
-        sidePane.setMaxWidth(SceneManager.SIDE_PANE_WIDTH);
-        sidePane.setMaxHeight(Double.MAX_VALUE);
-        sidePane.setFillWidth(true);
-        sidePane.setAlignment(Pos.CENTER);
-        sidePane.getStyleClass().add("side-pane");
+        StackPane takebackStack = new StackPane(
+                takebackNormalBox,
+                takebackOfferSentBox,
+                takebackOfferBar
+        );
 
-        return sidePane;
+        showTakebackNormalControls();
+
+        VBox bottom = new VBox(takebackStack, yourName);
+
+        VBox root = new VBox(top, centerBox, bottom);
+        root.setPrefWidth(SceneManager.SIDE_PANE_WIDTH);
+        root.setAlignment(Pos.TOP_CENTER);
+        root.getStyleClass().add("side-pane");
+
+        return root;
+    }
+
+    /* ======================
+       HELPERS
+       ====================== */
+
+    private static Label makeNameLabel(String text) {
+        Label l = new Label(text);
+        l.setMaxWidth(Double.MAX_VALUE);
+        l.setMinHeight(ROW_HEIGHT);
+        l.setAlignment(Pos.CENTER);
+        l.getStyleClass().add("player-name");
+        return l;
+    }
+
+    private static Button makeActionButton(String text) {
+        Button b = new Button(text);
+        b.setMaxWidth(Double.MAX_VALUE);
+        b.setMinHeight(ROW_HEIGHT);
+        return b;
+    }
+
+    private static VBox makeSentButtonBox(String text) {
+        Button b = makeActionButton(text);
+        b.setDisable(true);
+        return new VBox(b);
+    }
+
+    private static StackPane makeOfferBar(String text) {
+
+        Label deny = iconLabel("/icons/cross.png");
+        Label accept = iconLabel("/icons/tick.png");
+
+        Region spacer = new Region();
+        spacer.setMinWidth(12);
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox clickLayer = new HBox(deny, spacer, accept);
+        clickLayer.setAlignment(Pos.CENTER);
+        clickLayer.setMaxWidth(Double.MAX_VALUE);
+
+        Label msg = new Label(text);
+        msg.setWrapText(true);
+        msg.setTextAlignment(TextAlignment.CENTER);
+        msg.setAlignment(Pos.CENTER);
+        msg.getStyleClass().add("offer-text");
+        msg.setTranslateY(-6);
+
+        StackPane bar = new StackPane(clickLayer, msg);
+        bar.setMinHeight(ROW_HEIGHT);
+        bar.setMaxWidth(Double.MAX_VALUE);
+        bar.getStyleClass().add("offer-bar");
+
+        StackPane.setAlignment(msg, Pos.CENTER);
+
+        return bar;
+    }
+
+    private static Label iconLabel(String path) {
+        ImageView iv = new ImageView(
+                new Image(SidePane.class.getResourceAsStream(path))
+        );
+        iv.setPreserveRatio(true);
+        iv.setFitHeight(64);
+
+        Label l = new Label("", iv);
+        l.setAlignment(Pos.CENTER);
+        l.getStyleClass().add("offer-icon");
+        l.setMinWidth(64);
+        l.setMinHeight(ROW_HEIGHT);
+
+        return l;
     }
 }

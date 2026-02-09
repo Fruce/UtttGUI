@@ -25,6 +25,9 @@ public class BoardMaker {
 
     // ================= ROOT ==========================
     private static StackPane boardRoot;
+    
+    // ================= BOARD CONTENT =====================
+    private static StackPane boardContent;
 
     // ================= GAME OVER OVERLAY =============
     private static StackPane gameOverOverlay;
@@ -49,6 +52,10 @@ public class BoardMaker {
 
     public static StackPane getBoardRoot() {
         return boardRoot;
+    }
+    
+    public static StackPane getBoardContent() {
+        return boardContent;
     }
 
     public static StackPane getGameOverOverlay() {
@@ -80,26 +87,55 @@ public class BoardMaker {
             bigCells[index]
         };
     }
+    
+    /* ================= GETTERS FOR RESET / REDRAW ================= */
+
+    public static StackPane[][] getCells() {
+        return cells;
+    }
+
+    public static StackPane[] getGameplayLayers() {
+        return gameplayLayers;
+    }
+
+    public static Text[] getLocalWinMarks() {
+        return localWinMarks;
+    }
+
+    public static Pane[] getBigCells() {
+        return bigCells;
+    }
+
 
     // =================================================
 
     public static StackPane createBoard(GameController controller) {
 
         boardRoot = createBoardRoot();
+        //content layer (this gets blurred)
+        boardContent = new StackPane();
+                
         GridPane board = createBoardGrid(controller);
-
         Pane bigLines = createGlobalBigGridLines();
         freeMoveHighlight = createFreeMoveHighlight();
 
-        boardRoot.getChildren().addAll(bigLines, board, freeMoveHighlight);
+        boardContent.getChildren().addAll(
+            bigLines,
+            board,
+            freeMoveHighlight
+        );
 
-        StackPane wrapper = createScaledWrapper(boardRoot);
-
+        // Overlay layer (never blurred)
         gameOverOverlay = createGameOverOverlay();
-        wrapper.getChildren().add(gameOverOverlay);
 
-        return wrapper;
+        boardRoot.getChildren().addAll(
+            boardContent,
+            gameOverOverlay
+        );
+
+        return boardRoot;
     }
+
 
 
     /* ================= BIG BOARD ================= */
@@ -209,15 +245,20 @@ public class BoardMaker {
             cells[bigIndex][smallIndex] = cell;
 
             cell.setOnMouseClicked(e -> {
-
+            	
+            		char playedMark = controller.getCurrentMark();
+            		
 	            	MoveResult result = controller.placeMove(bigIndex, smallIndex); 
-                refreshBoard(controller, bigIndex, smallIndex, result);
+                refreshBoard(controller, bigIndex, smallIndex, result, playedMark);
                 
                 SidePane.setActivePlayer(controller.isLocalPlayersTurn());
-                char oppMark = MoveSwitcher.switchMove(controller.getCurrentMark());
-                SidePane.updateTurnText(false, oppMark);
                 
-                updateInputLock(controller); //lock board if not local player.
+                boolean isLocal = controller.isLocalPlayersTurn();
+
+                SidePane.setActivePlayer(isLocal);
+                SidePane.updateTurnText(isLocal, controller.getCurrentMark());
+                
+                updateInputLock(controller);//lock board if not local player.
             });
             
             
@@ -245,10 +286,9 @@ public class BoardMaker {
     /* ================= REFRESH BOARD ================= */
     
     public static void refreshBoard(
-    		GameController controller, int bigIndex, int smallIndex, MoveResult result) 
+    		GameController controller, int bigIndex, int smallIndex, MoveResult result, char playedMark) 
     {
     	
-        char playedMark = controller.getCurrentMark();
         if (result == MoveResult.INVALID) return;
   
         //click sound fx
@@ -298,6 +338,49 @@ public class BoardMaker {
         }
     }
     
+    /* ================= FULL REDRAW (UNDO / RESYNC) ================= */
+
+    public static void fullRedraw(GameController controller) {
+
+        // 1️ Hard reset all visuals
+        BoardEffects.resetAll();
+
+        // 2️ Rebuild from model
+        var state = controller.getState();
+
+        for (int big = 0; big < 9; big++) {
+
+            // redraw placed marks
+            for (int small = 0; small < 9; small++) {
+                char mark = state.state[big][small];
+                if (mark != ' ') {
+                    BoardEffects.placeMark(cells[big][small], mark);
+                }
+            }
+
+            // redraw local wins
+            if (state.globalState[big] != ' ') {
+                BoardEffects.showLocalWin(
+                    gameplayLayers[big],
+                    localWinMarks[big],
+                    state.globalState[big]
+                );
+            }
+        }
+
+        // 3️ Restore highlights
+        int next = controller.getNextForcedBoard();
+        char turnMark = MoveSwitcher.switchMove(controller.getCurrentMark());
+
+        if (next == -1 || controller.isDeadBoard(next)) {
+            BoardEffects.freeMoveHighlight(turnMark);
+        } else {
+            BoardEffects.highlightBigCell(next, turnMark);
+        }
+
+    }
+
+    
     /* ================= BOARD LOCK ================= */
     
     public static void updateInputLock(GameController controller) {
@@ -317,6 +400,7 @@ public class BoardMaker {
 
         highlight.setVisible(false);
         highlight.setMouseTransparent(true);
+
         StackPane.setAlignment(highlight, Pos.CENTER);
 
         return highlight;
@@ -423,28 +507,5 @@ public class BoardMaker {
 
         return board;
     }
-
-    private static StackPane createScaledWrapper(StackPane boardRoot) {
-
-        StackPane wrapper = new StackPane(boardRoot);
-        wrapper.setAlignment(Pos.CENTER);
-
-        Scale boardScale = new Scale(1, 1);
-        boardScale.setPivotX(BOARD_SIZE / 2);
-        boardScale.setPivotY(BOARD_SIZE / 2);
-        boardRoot.getTransforms().add(boardScale);
-
-        wrapper.layoutBoundsProperty().addListener((obs, o, b) -> {
-            double s = Math.min(
-                    b.getWidth() / BOARD_SIZE,
-                    b.getHeight() / BOARD_SIZE
-            );
-            boardScale.setX(s);
-            boardScale.setY(s);
-        });
-
-        return wrapper;
-    }
-
 
 }

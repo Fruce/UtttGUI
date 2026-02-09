@@ -1,28 +1,37 @@
 package main;
 
 import board.BoardMaker;
+import board.EscOverlay;
 import board.SidePane;
 import game.GameController;
-import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.DoubleBinding;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.transform.Scale;
 import javafx.stage.Stage;
+import network.NetworkEndpoint;
+import network.NetworkListener;
+import sceneControllers.SidePaneController;
 
 public final class SceneManager {
 
     private static Stage stage;
-    public final static double SIDE_PANE_WIDTH = 250;
+
+    /* ================= DESIGN CONSTANTS ================= */
+
+    public static final double SIDE_PANE_WIDTH = 340;
+
+    // BoardMaker: BOARD_DESIGN_SIZE = 260 -> 260 * 3
+    public static final double BOARD_DESIGN_SIZE = 780;
+
+    public static final double GAME_HEIGHT = BOARD_DESIGN_SIZE;
+    public static final double GAME_WIDTH =
+            SIDE_PANE_WIDTH + BOARD_DESIGN_SIZE;
 
     private SceneManager() {}
 
@@ -32,19 +41,10 @@ public final class SceneManager {
         stage = primaryStage;
         stage.setTitle("Ultimate Tic Tac Toe - Fruce");
 
-        double minWidth =
-            SIDE_PANE_WIDTH +
-            Main.MIN_BOARD_SIZE +
-            Main.OUTER_PADDING * 2;
+        stage.setMinWidth(GAME_WIDTH * 0.75);
+        stage.setMinHeight(GAME_HEIGHT * 0.75);
 
-        double minHeight =
-            Main.MIN_BOARD_SIZE +
-            Main.OUTER_PADDING * 3;
-
-        stage.setMinWidth(minWidth);
-        stage.setMinHeight(minHeight);
-
-        stage.setWidth(930);
+        stage.setWidth(973);
         stage.setHeight(700);
     }
 
@@ -72,6 +72,7 @@ public final class SceneManager {
             throw new RuntimeException("Failed to load " + fxml, e);
         }
     }
+
     
     public static <T> T switchToAndGetController(String fxml) {
         try {
@@ -85,22 +86,95 @@ public final class SceneManager {
             stage.setScene(scene);
             stage.show();
 
-            return loader.getController();
+            Object controller = loader.getController();
+
+            if (controller instanceof ResizableScene rs) {
+                applyResizeFix(rs);
+            }
+
+            return (T) controller;
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to load " + fxml, e);
         }
     }
 
-    /* ================= RESIZE FIX ================= */
+    /* ================= GAME SCENE CORE ================= */
 
+    private static void showGameScene(Parent scalableGameRoot) {
+
+	    // Layer 1: holds the scaled content
+	    StackPane scaleHolder = new StackPane(scalableGameRoot);
+	    scaleHolder.setAlignment(Pos.CENTER);
+	
+	    // Layer 2: padding layer (NOT scaled)
+	    StackPane paddedRoot = new StackPane(scaleHolder);
+	    paddedRoot.setPadding(new Insets(Main.OUTER_PADDING));
+	    paddedRoot.setAlignment(Pos.CENTER);
+	    	
+	    // Layer 3: overlay layer (ESC menu etc.)
+	    StackPane overlayRoot = new StackPane(paddedRoot);
+	
+	    Scene scene = new Scene(overlayRoot);
+	
+	    scene.getStylesheets().add(
+	        SceneManager.class
+	            .getResource("/board/board.css")
+	            .toExternalForm()
+	    );
+	
+	    stage.setScene(scene);
+	    stage.show();
+	
+	    installEscOverlay(scene, overlayRoot, scalableGameRoot);
+    }
+
+
+
+    /* ================= SCALING (SINGLE SOURCE OF TRUTH) ================= */
+
+    private static StackPane makeScalableRoot(
+            Parent content,
+            double baseWidth,
+            double baseHeight
+    ) {
+        StackPane root = new StackPane(content);
+
+        root.setPrefSize(baseWidth, baseHeight);
+        root.setMinSize(baseWidth, baseHeight);
+        root.setMaxSize(baseWidth, baseHeight);
+
+        Scale scale = new Scale(1, 1);
+        scale.setPivotX(baseWidth / 2);
+        scale.setPivotY(baseHeight / 2);
+        root.getTransforms().add(scale);
+
+        Runnable updateScale = () -> {
+        	
+	        	double availableWidth  = stage.getWidth()  - Main.OUTER_PADDING * 2;
+	        	double availableHeight = stage.getHeight() - Main.OUTER_PADDING * 2;
+	
+	        	double s = Math.min(
+	        	    availableWidth  / baseWidth,
+	        	    availableHeight / baseHeight
+	        	);
+            
+            scale.setX(s);
+            scale.setY(s);
+        };
+
+        updateScale.run();
+        stage.widthProperty().addListener((o,a,b) -> updateScale.run());
+        stage.heightProperty().addListener((o,a,b) -> updateScale.run());
+
+        return root;
+    }
+    
     private static void applyResizeFix(ResizableScene rs) {
 
-        StackPane wrapper = rs.getWrapper();
         StackPane root = rs.getRoot();
         double BASE_SIZE = rs.getBaseSize();
 
-        // lock design size
         root.setPrefSize(BASE_SIZE, BASE_SIZE);
         root.setMinSize(BASE_SIZE, BASE_SIZE);
         root.setMaxSize(BASE_SIZE, BASE_SIZE);
@@ -110,133 +184,133 @@ public final class SceneManager {
         scale.setPivotY(BASE_SIZE / 2);
         root.getTransforms().add(scale);
 
-        // 🔑 APPLY SCALE IMMEDIATELY using CURRENT STAGE SIZE
-        updateScaleFromStage(scale, BASE_SIZE);
+        Runnable update = () -> {
+            double s = Math.min(
+                stage.getWidth() / BASE_SIZE,
+                stage.getHeight() / BASE_SIZE
+            );
+            scale.setX(s);
+            scale.setY(s);
+        };
 
-        // 🔁 update only when window actually changes size
-        stage.widthProperty().addListener((obs, o, n) ->
-            updateScaleFromStage(scale, BASE_SIZE)
-        );
-        stage.heightProperty().addListener((obs, o, n) ->
-            updateScaleFromStage(scale, BASE_SIZE)
-        );
-    }
-    
-    private static void updateScaleFromStage(Scale scale, double base) {
-        double s = Math.min(
-            stage.getWidth() / base,
-            stage.getHeight() / base
-        );
-        scale.setX(s);
-        scale.setY(s);
+        update.run();
+        stage.widthProperty().addListener((o,a,b) -> update.run());
+        stage.heightProperty().addListener((o,a,b) -> update.run());
     }
 
 
-    /* ================= GAME ================= */
+    /* ================= OFFLINE GAME ================= */
 
     public static void startGame(GameController controller) {
         try {
-            StackPane boardWrapper = BoardMaker.createBoard(controller);
+            StackPane board = BoardMaker.createBoard(controller);
 
-            Scene scene = new Scene(boardWrapper);
-            scene.getStylesheets().add(
-                SceneManager.class
-                    .getResource("/board/board.css")
-                    .toExternalForm()
-            );
+            StackPane scalableRoot =
+                makeScalableRoot(
+                    board,
+                    BOARD_DESIGN_SIZE,
+                    BOARD_DESIGN_SIZE
+                );
 
-            stage.setScene(scene);
-            stage.show();
-
-            boardWrapper.setPadding(new Insets(Main.OUTER_PADDING));
-
-            boardWrapper.minWidthProperty().bind(
-                Bindings.max(
-                    Main.MIN_BOARD_SIZE,
-                    Bindings.min(
-                        scene.widthProperty().subtract(Main.OUTER_PADDING * 2),
-                        scene.heightProperty().subtract(Main.OUTER_PADDING * 2)
-                    )
-                )
-            );
-
-            boardWrapper.minHeightProperty().bind(boardWrapper.minWidthProperty());
-            boardWrapper.maxWidthProperty().bind(boardWrapper.minWidthProperty());
-            boardWrapper.maxHeightProperty().bind(boardWrapper.minWidthProperty());
+            showGameScene(scalableRoot);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to start game", e);
         }
     }
-    
-    public static void startMultiplayerGame(GameController controller) {
+
+    /* ================= MULTIPLAYER GAME ================= */
+
+    public static void startMultiplayerGame(
+    			GameController controller,
+            NetworkListener listener,
+            NetworkEndpoint network) 
+    {
         try {
-            // --- create nodes ---
-            StackPane boardWrapper = BoardMaker.createBoard(controller);
-            VBox sidePane = SidePane.create();
+            StackPane board = BoardMaker.createBoard(controller);
+            StackPane.setAlignment(board, Pos.CENTER);
 
-            HBox root = new HBox(15, sidePane, boardWrapper);
-            root.setAlignment(Pos.CENTER);
-            root.setPadding(new Insets(Main.OUTER_PADDING));
+            var sidePane = SidePane.create();
 
-            HBox.setHgrow(boardWrapper, Priority.ALWAYS);
-            HBox.setHgrow(sidePane, Priority.NEVER);
+            SidePaneController sidePaneController =
+                    new SidePaneController(controller, listener, network);
             
-            
-
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(
-                SceneManager.class
-                    .getResource("/board/board.css")
-                    .toExternalForm()
+            controller.setOnNewGameOfferReceived(
+                    sidePaneController::onNewGameOfferReceived
             );
 
-            stage.setScene(scene);
-            stage.show();
-
-            /* =============================
-               SINGLE SOURCE OF TRUTH
-               ============================= */
-
-            DoubleBinding boardSize = Bindings.createDoubleBinding(
-                () -> Math.max(
-                    Main.MIN_BOARD_SIZE,
-                    Math.min(
-                        scene.getWidth()
-                            - SIDE_PANE_WIDTH
-                            - Main.OUTER_PADDING * 2,
-                        scene.getHeight()
-                            - Main.OUTER_PADDING * 2
-                    )
-                ),
-                scene.widthProperty(),
-                scene.heightProperty()
+            controller.setOnNewGameAccepted(
+                    sidePaneController::onNewGameAccepted
             );
 
-            /* =============================
-               APPLY SIZE
-               ============================= */
+            controller.setOnNewGameDenied(
+                    sidePaneController::onNewGameDenied
+            );
+            
+            // ====== TAKEBACK =====
+            
+            controller.setOnTakebackOfferReceived(
+                    sidePaneController::onTakebackOfferReceived
+            );
 
-            // board (square)
-            boardWrapper.prefWidthProperty().bind(boardSize);
-            boardWrapper.prefHeightProperty().bind(boardSize);
-            boardWrapper.minWidthProperty().bind(boardSize);
-            boardWrapper.minHeightProperty().bind(boardSize);
-            boardWrapper.maxWidthProperty().bind(boardSize);
-            boardWrapper.maxHeightProperty().bind(boardSize);
+            controller.setOnTakebackAccepted(
+                    sidePaneController::onTakebackAccepted
+            );
 
-            // side pane (locked to board height)
-            sidePane.prefHeightProperty().bind(boardSize);
-            sidePane.minHeightProperty().bind(boardSize);
-            sidePane.maxHeightProperty().bind(boardSize);
+            controller.setOnTakebackDenied(
+                    sidePaneController::onTakebackDenied
+            );
+            
+            //avoids Highlight border fucking up the SidePane buttons adjacent to it.
+            sidePane.setViewOrder(-1);
+            
+            HBox layout = new HBox(15, sidePane, board);
+            layout.setAlignment(Pos.CENTER);
+            layout.setPadding(new Insets(0));
+
+            StackPane scalableRoot =
+                makeScalableRoot(
+                    layout,
+                    GAME_WIDTH,
+                    GAME_HEIGHT
+                );
+
+            showGameScene(scalableRoot);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to start multiplayer game", e);
         }
     }
 
+    /* ================= ESC OVERLAY ================= */
 
+    private static void installEscOverlay(
+            Scene scene,
+            StackPane overlayRoot,
+            Parent gameRoot
+    ) {
+        var escMenu = EscOverlay.create(() ->
+            switchTo("main-menu.fxml")
+        );
 
-    
+        escMenu.setVisible(false);
+        escMenu.setManaged(false);
 
+        overlayRoot.getChildren().add(escMenu);
+
+        scene.setOnKeyPressed(e -> {
+            switch (e.getCode()) {
+                case ESCAPE -> {
+                    boolean show = !escMenu.isVisible();
+
+                    escMenu.setVisible(show);
+                    escMenu.setManaged(show);
+
+                    gameRoot.setEffect(
+                        show ? new GaussianBlur(18) : null
+                    );
+                }
+            }
+        });
+    }
 }

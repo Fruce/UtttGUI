@@ -4,7 +4,7 @@ import board.SoundFX;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
-import network.NgrokManager;
+import network.CloudflareTunnel;
 
 public class Main extends Application {
 
@@ -18,7 +18,7 @@ public class Main extends Application {
         SceneManager.switchTo("main-menu.fxml");
         
         stage.setOnCloseRequest(e -> {
-            NgrokManager.stopTunnel();
+            CloudflareTunnel.stopTunnel();
             Platform.exit();
             System.exit(0);
         });
