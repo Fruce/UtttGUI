@@ -171,6 +171,6 @@ public final class SidePaneController {
         SidePane.showTakebackNormalControls();
         SidePane.setActivePlayer(localStarts);
         SidePane.setOpponentName(opponentName);
-        SidePane.updateTurnText(localStarts, 'O');
+        SidePane.updateTurnText(localStarts, 'X');
     }
 }
